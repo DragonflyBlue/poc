@@ -8,11 +8,9 @@ import Flutter
     
     override func application(
         _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
-        ) -> Bool {
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        
-        let controller = self.window.rootViewController as! FlutterViewController
+        let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
         
         linkNativeCode(controller: controller)
         
@@ -30,23 +28,23 @@ import Flutter
 extension AppDelegate {
     
     func linkNativeCode(controller: FlutterViewController) {
-        setupMethodChannelForSurveyMonkey(controller: controller)
+        setupMethodChannelForCamera(controller: controller)
     }
     
-    private func setupMethodChannelForSurveyMonkey(controller: FlutterViewController) {
+    private func setupMethodChannelForCamera(controller: FlutterViewController) {
         
-        let surveyMonkeyChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller)
+        let cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
         
-        surveyMonkeyChannel.setMethodCallHandler { (call, result) in
+        cameraChannel.setMethodCallHandler { (call, result) in
             
             if call.method == "sdkVersion" {
-                let vc = UIStoryboard.init(name: "Main", bundle: .main)
-                        .instantiateViewController(withIdentifier: "CameraViewController") as! SurveyMonkeyViewController
-                if let arguments = call.arguments as? String {
-                    vc.surveyHash = arguments
-                }
-                vc.surveyResult = result
-                self.navigationController.pushViewController(vc, animated: true)
+                // let vc = UIStoryboard.init(name: "Main", bundle: .main)
+                //         .instantiateViewController(withIdentifier: "CameraViewController") as! CameraViewController
+                // if let arguments = call.arguments as? String {
+                //     vc.surveyHash = arguments
+                // }
+                // vc.surveyResult = result
+                // self.navigationController.pushViewController(vc, animated: true)
             }
         }
     }
