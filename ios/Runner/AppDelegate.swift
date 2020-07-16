@@ -30,21 +30,14 @@ extension AppDelegate {
     func linkNativeCode(controller: FlutterViewController) {
         setupMethodChannelForCamera(controller: controller)
     }
-    
+
     private func setupMethodChannelForCamera(controller: FlutterViewController) {
-        
         let cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
-        
+        let handler = CameraHandler
         cameraChannel.setMethodCallHandler { (call, result) in
             
             if call.method == "sdkVersion" {
-                // let vc = UIStoryboard.init(name: "Main", bundle: .main)
-                //         .instantiateViewController(withIdentifier: "CameraViewController") as! CameraViewController
-                // if let arguments = call.arguments as? String {
-                //     vc.surveyHash = arguments
-                // }
-                // vc.surveyResult = result
-                // self.navigationController.pushViewController(vc, animated: true)
+                cameraChannel.invokeMethod("sdkVersionReturn", handler.sdkVersion());
             }
         }
     }
