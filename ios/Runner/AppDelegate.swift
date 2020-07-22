@@ -3,78 +3,73 @@ import Flutter
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
-  override func application(
-  _ application: UIApplication,
-  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-  let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-  linkNativeCode(controller)
-  GeneratedPluginRegistrant.register(with: self)
-  self.navigationController = UINavigationController(rootViewController: controller)
-  self.window.rootViewController = self.navigationController
-  self.navigationController.setNavigationBarHidden(true, animated: false)
-  self.window.makeKeyAndVisible()
-  return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
+
+    override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+        linkNativeCode(controller: controller)
+        GeneratedPluginRegistrant.register(with: self)
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
 }
 
 extension AppDelegate {
 
-  func linkNativeCode(controller: FlutterViewController) {
-      setupMethodChannelForCamera(controller: controller)
-  }
-
-  private func setupMethodChannelForCamera(controller: FlutterViewController) {
-    let cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
-    let vc = let vc = UIStoryboard.init(name: "Main", bundle: .main)
-      .instantiateViewController(withIdentifier: "CameraViewController") as! CameraViewController
-    self.navigationController.pushViewController(vc, animated: true)
-    cameraChannel.setMethodCallHandler { (call, result) in          
-      if call.method == "sdkVersion" {
-          cameraChannel.invokeMethod("sdkVersionReturn", vc.sdkVersion());
-      }
-      // if call.method == "cleanAll" {
-      //     if vc.isConnected() vc.disconnect()
-      //     if !vc.getCameraList().isEmpty() vc.clear()
-      // }
-      // if call.method == "connect" {
-      //   connect(vc.getFlirOne());
-      // }
-      // if call.method == "disconnect" {
-      //     vc.disconnect();
-      //     result.success(true);
-      // }
-      // if call.method == "discover" {
-      //     startDiscovery();
-      // }
-      // if call.method == "startStream" {
-      //   DispatchQueue.main.async {
-      //     @Override
-      //     public void run() {
-      //       // Call the desired channel message here.
-      //       try {
-      //           vc.startStream(streamDataListener);
-      //       } catch (Exception e) {
-      //           Log.d("Fatal error", e.getMessage());
-      //       }
-      //     }
-      //   });
-      // }
-      // if call.method == "stopStream" {
-      //   DispatchQueue.main.async {
-      //     @Override
-      //     public void run() {
-      //       // Call the desired channel message here.
-      //       try {
-      //           vc.stopStream();
-      //       } catch (Exception e) {
-      //           Log.d("Fatal error", e.getMessage());
-      //       }
-      //     }
-      //   });
-      // }
+    func linkNativeCode(controller: FlutterViewController) {
+        setupMethodChannelForCamera(controller: controller)
     }
-  }
+
+    private func setupMethodChannelForCamera(controller: FlutterViewController) {
+        let cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
+        let vc = CameraHandler()
+        cameraChannel.setMethodCallHandler { (call, result) in          
+            if call.method == "sdkVersion" {
+                cameraChannel.invokeMethod("sdkVersionReturn", arguments: vc.sdkVersion());
+            }
+            // if call.method == "cleanAll" {
+            //     if vc.isConnected() vc.disconnect()
+            //     if !vc.getCameraList().isEmpty() vc.clear()
+            // }
+            // if call.method == "connect" {
+            //   connect(vc.getFlirOne());
+            // }
+            // if call.method == "disconnect" {
+            //     vc.disconnect();
+            //     result.success(true);
+            // }
+            // if call.method == "discover" {
+            //     startDiscovery();
+            // }
+            // if call.method == "startStream" {
+            //   DispatchQueue.main.async {
+            //     @Override
+            //     public void run() {
+            //       // Call the desired channel message here.
+            //       try {
+            //           vc.startStream(streamDataListener);
+            //       } catch (Exception e) {
+            //           Log.d("Fatal error", e.getMessage());
+            //       }
+            //     }
+            //   });
+            // }
+            // if call.method == "stopStream" {
+            //   DispatchQueue.main.async {
+            //     @Override
+            //     public void run() {
+            //       // Call the desired channel message here.
+            //       try {
+            //           vc.stopStream();
+            //       } catch (Exception e) {
+            //           Log.d("Fatal error", e.getMessage());
+            //       }
+            //     }
+            //   });
+            // }
+        }
+    }
 
   // private void startDiscovery() {
   //     cameraHandler.startDiscovery(discoveryEventListener, discoveryStatusListener);
