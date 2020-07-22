@@ -28,10 +28,10 @@ extension AppDelegate {
             if call.method == "sdkVersion" {
                 cameraChannel.invokeMethod("sdkVersionReturn", arguments: vc.sdkVersion());
             }
-            // if call.method == "cleanAll" {
-            //     if vc.isConnected() vc.disconnect()
-            //     if !vc.getCameraList().isEmpty() vc.clear()
-            // }
+            if call.method == "cleanAll" {
+                if vc.isConnected() vc.disconnect()
+                if !vc.getCameraList().isEmpty() vc.clear()
+            }
             // if call.method == "connect" {
             //   connect(vc.getFlirOne());
             // }
