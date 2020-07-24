@@ -1,196 +1,166 @@
+import CoreImage
+
+public protocol StreamDataListener {
+    func temperature(temperature: Double)
+    func bytes(msxBitmap: CGBitmapInfo)
+    func onStreamStopped()
+}
+
+protocol DiscoveryStatus {
+    func started();
+    func stopped();
+}
+
 @objc public class CameraHandler: NSObject {
-    private static final String TAG = "CameraHandler";
-
-    // private StreamDataListener streamDataListener;
-
-    // public interface StreamDataListener {
-    //     public void temperature(Double temperature);
-    //     public void bytes(Bitmap msxBitmap);
-    //     public void onStreamStopped();
-    // }
-
+    var streamDataListener: StreamDataListener!
+    
     //Discovered FLIR cameras
-    LinkedList<Identity> foundCameraIdentities = new LinkedList<>();
+    var foundCameraIdentities = [FLIRIdentity]();
 
     //A FLIR Camera
-    private Camera camera;
-
-
-    // public interface DiscoveryStatus {
-    //     void started();
-    //     void stopped();
-    // }
-
-    public CameraHandler() {
-        camera = new Camera();
+    let camera: FLIRCamera!
+    
+    let discoverer = FLIRDiscovery()
+    
+    override init() {
+        camera = FLIRCamera()
     }
 
-    // /**
-    //  * Start discovery of USB and Emulators
-    //  */
-    // public void startDiscovery(DiscoveryEventListener cameraDiscoveryListener, DiscoveryStatus discoveryStatus) {
-    //     DiscoveryFactory.getInstance().scan(cameraDiscoveryListener, CommunicationInterface.USB);
-    //     discoveryStatus.started();
-    // }
+    /**
+    * Start discovery of USB and Emulators
+    */
+    func startDiscovery(cameraDiscoveryListener: FLIRDiscoveryEventDelegate, discoveryStatus: DiscoveryStatus) {
+        discoverer.start(FLIRCommunicationInterface.lightning)
+        discoveryStatus.started()
+    }
 
-    // /**
-    //  * Stop discovery of USB and Emulators
-    //  */
-    // public void stopDiscovery(DiscoveryStatus discoveryStatus) {
-    //     DiscoveryFactory.getInstance().stop(CommunicationInterface.USB);
-    //     discoveryStatus.stopped();
-    // }
+    /**
+    * Stop discovery of USB and Emulators
+    */
+    func stopDiscovery(discoveryStatus: DiscoveryStatus) {
+        discoverer.stop()
+        discoveryStatus.stopped()
+    }
 
-    // public void connect(Identity identity, ConnectionStatusListener connectionStatusListener) throws IOException {
-    //     camera.connect(identity, connectionStatusListener);
-    // }
+    func connect(identity: FLIRIdentity, connectionStatusListener: FLIRDataReceivedDelegate) throws {
+        try camera.connect(identity);
+        camera.delegate = connectionStatusListener
+    }
 
-    public void disconnect() {
-        if (camera == null) {
-            return;
+    func disconnect() {
+        if camera == nil {
+            return
         }
-        if (camera.isGrabbing()) {
+        if camera.isGrabbing() {
             stopStream();
         }
         camera.disconnect();
     }
 
-    // /**
-    //  * Start a stream of {@link ThermalImage}s images from a FLIR ONE or emulator
-    //  */
-    // public void startStream(StreamDataListener listener) {
-    //     streamDataListener = listener;
-    //     camera.subscribeStream(thermalImageStreamListener);
-    // }
+    /**
+    * Start a stream of {@link ThermalImage}s images from a FLIR ONE or emulator
+    */
+    func startStream(listener: StreamDataListener) {
+        streamDataListener = listener
+        try! camera.subscribeStream()
+    }
 
-    // /**
-    //  * Stop a stream of {@link ThermalImage}s images from a FLIR ONE or emulator
-    //  */
-    // public void stopStream() {
-    //     camera.unsubscribeAllStreams();
-    //     streamDataListener.onStreamStopped();
-    // }
+    /**
+    * Stop a stream of {@link ThermalImage}s images from a FLIR ONE or emulator
+    */
+    func stopStream() {
+        camera.unsubscribeStream()
+        streamDataListener.onStreamStopped();
+    }
 
-    // /**
-    //  * Add a found camera to the list of known cameras
-    //  */
-    // public void add(Identity identity) {
-    //     foundCameraIdentities.add(identity);
-    // }
+    /**
+    * Add a found camera to the list of known cameras
+    */
+    func add(identity: FLIRIdentity) {
+        foundCameraIdentities.append(identity)
+    }
 
-    // public Identity get(int i) {
-    //     return foundCameraIdentities.get(i);
-    // }
+    func get(i: Int) -> FLIRIdentity {
+        return foundCameraIdentities.remove(at: i)
+    }
 
-    // /**
-    //  * Get a read only list of all found cameras
-    //  */
-    // public List<Identity> getCameraList() {
-    //     return Collections.unmodifiableList(foundCameraIdentities);
-    // }
+    /**
+    * Get a read only list of all found cameras
+    */
+    func getCameraList() -> Array<FLIRIdentity> {
+        return foundCameraIdentities
+    }
 
-    public boolean isConnected() {
-        return camera.isConnected();
+    func isConnected() -> Bool {
+        return camera.isConnected()
     }
 
     /**
      * Clear all known network cameras
      */
-    public void clear() {
-        foundCameraIdentities.clear();
+    func clear() {
+        foundCameraIdentities.removeAll()
     }
 
-    // public Identity getCppEmulator() {
-    //     for (Identity foundCameraIdentity : foundCameraIdentities) {
-    //         if (foundCameraIdentity.deviceId.contains("C++ Emulator")) {
-    //             return foundCameraIdentity;
-    //         }
-    //     }
-    //     return null;
-    // }
+    func getCppEmulator() -> FLIRIdentity? {
+        for foundCameraIdentity in foundCameraIdentities {
+            if foundCameraIdentity.deviceId().contains("C++ Emulator") {
+                return foundCameraIdentity;
+            }
+        }
+        return nil
+    }
 
-    // public Identity getFlirOneEmulator() {
-    //     for (Identity foundCameraIdentity : foundCameraIdentities) {
-    //         if (foundCameraIdentity.deviceId.contains("EMULATED FLIR ONE")) {
-    //             return foundCameraIdentity;
-    //         }
-    //     }
-    //     return null;
-    // }
+    func getFlirOneEmulator() -> FLIRIdentity? {
+        for foundCameraIdentity in foundCameraIdentities {
+            if foundCameraIdentity.deviceId().contains("EMULATED FLIR ONE") {
+                return foundCameraIdentity;
+            }
+        }
+        return nil
+    }
 
-    // public Identity getFlirOne() {
-    //     for (Identity foundCameraIdentity : foundCameraIdentities) {
-    //         boolean isFlirOneEmulator = foundCameraIdentity.deviceId.contains("EMULATED FLIR ONE");
-    //         boolean isCppEmulator = foundCameraIdentity.deviceId.contains("C++ Emulator");
-    //         if (!isFlirOneEmulator && !isCppEmulator) {
-    //             return foundCameraIdentity;
-    //         }
-    //     }
+    func getFlirOne() -> FLIRIdentity? {
+        for foundCameraIdentity in foundCameraIdentities {
+            let isFlirOneEmulator: Bool = foundCameraIdentity.deviceId().contains("EMULATED FLIR ONE");
+            let isCppEmulator: Bool = foundCameraIdentity.deviceId().contains("C++ Emulator");
+            if !isFlirOneEmulator && !isCppEmulator {
+                return foundCameraIdentity;
+            }
+        }
+        return nil
+     }
 
-    //     return null;
-    // }
+    var thermalImageStreamListener: FLIRDataReceivedDelegate {
+        func imageReceived() {
+            //Will be called on a non-ui thread
+            DispatchQueue.main.async {
+                func run(){
+                    self.camera.withImage(self.handleIncomingImage())
+                }
+            }
+        }
+    }
 
-    // private void withImage(Camera.Consumer<ThermalImage> functionToRun) {
-    //     camera.withImage(functionToRun);
-    // }
+    func close() throws {
+        camera.disconnect()
+    }
 
+    func handleIncomingImage() -> FLIRThermalImageBlock {
+        let uiImage: UIImage = (camera.self.delegate?.getImage())!
+        let image = uiImage.cgImage
+        let msxBitmap = uiImage.cgImage?.bitmapInfo
 
-    // /**
-    //  * Called whenever there is a new Thermal Image available, should be used in conjunction with {@link Camera.Consumer}
-    //  */
-    // private final ThermalImageStreamListener thermalImageStreamListener = new ThermalImageStreamListener() {
-    //     @Override
-    //     public void onImageReceived() {
-    //         Log.d("Themal", "image received");
+        let x: Int = image!.width / 2;
+        let y: Int = image!.height / 2;
+        
+        let thermalImage: FLIRThermalImage
+        thermalImage.setTemperatureUnit(TemperatureUnit.FAHRENHEIT);
+        let temperature: Double = thermalImage.getValueAt(CGPoint(x:x, y:y));
 
-
-    //         //Will be called on a non-ui thread
-    //         new Handler(Looper.getMainLooper()).post(() -> {
-    //             try {
-
-    //                 camera.withImage(handleIncomingImage);
-    //             } catch (Exception e) {
-
-    //                 Log.d("Thermal", "Error: thermal image error: " + e);
-    //             }
-    //         });
-    //     }
-    // }
-
-    // public void close() throws Exception {
-    //     camera.close();
-    // }
-
-    // /**
-    //  * Function to process a Thermal Image and update UI
-    //  */
-    // private final Camera.Consumer<ThermalImage> handleIncomingImage = new Camera.Consumer<ThermalImage>() {
-    //     @Override
-    //     public void accept(ThermalImage thermalImage) {
-    //         //Will be called on a non-ui thread,
-    //         // extract information on the background thread and send the specific information to the UI thread
-    //         Bitmap msxBitmap;
-    //         {   
-    //             final List<Palette> palettes = PaletteManager.getDefaultPalettes();
-    //             thermalImage.setPalette(palettes.get(0));
-    //             thermalImage.getFusion().setFusionMode(FusionMode.THERMAL_ONLY);
-    //             msxBitmap = BitmapAndroid.createBitmap(thermalImage.getImage()).getBitMap();
-    //         }
-
-
-
-    //         Double temperature;
-    //         {
-    //             int x = msxBitmap.getWidth() / 2;
-    //             int y = msxBitmap.getWidth() / 2;
-    //             thermalImage.setTemperatureUnit(TemperatureUnit.CELSIUS);
-    //             temperature =  thermalImage.getValueAt(new Point(x, y));
-    //         }
-
-    //         streamDataListener.bytes(msxBitmap);
-    //         streamDataListener.temperature(temperature);
-    //     }
-    // }
+        streamDataListener.bytes(msxBitmap: msxBitmap!);
+        streamDataListener.temperature(temperature: temperature);
+    }
 
     func sdkVersion() -> String {
         return "SDK Version Mac"

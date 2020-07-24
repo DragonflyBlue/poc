@@ -3,12 +3,16 @@ import Flutter
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
-
+    var connectedIdentity: FLIRIdentity? = nil
+    var cameraChannel: FlutterMethodChannel
+    let vc: CameraHandler
+    
     override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+
         linkNativeCode(controller: controller)
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -16,230 +20,148 @@ import Flutter
 }
 
 extension AppDelegate {
-
     func linkNativeCode(controller: FlutterViewController) {
         setupMethodChannelForCamera(controller: controller)
     }
-
+    
     private func setupMethodChannelForCamera(controller: FlutterViewController) {
-        let cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
-        let vc = CameraHandler()
+        cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
         cameraChannel.setMethodCallHandler { (call, result) in          
             if call.method == "sdkVersion" {
-                cameraChannel.invokeMethod("sdkVersionReturn", arguments: vc.sdkVersion());
+                self.cameraChannel.invokeMethod("sdkVersionReturn", arguments: self.vc.sdkVersion());
             }
             if call.method == "cleanAll" {
-                if vc.isConnected() vc.disconnect()
-                if !vc.getCameraList().isEmpty() vc.clear()
+                if self.vc.isConnected() { self.vc.disconnect() }
+                if !self.vc.getCameraList().isEmpty { self.vc.clear() }
             }
-            // if call.method == "connect" {
-            //   connect(vc.getFlirOne());
-            // }
-            // if call.method == "disconnect" {
-            //     vc.disconnect();
-            //     result.success(true);
-            // }
-            // if call.method == "discover" {
-            //     startDiscovery();
-            // }
-            // if call.method == "startStream" {
-            //   DispatchQueue.main.async {
-            //     @Override
-            //     public void run() {
-            //       // Call the desired channel message here.
-            //       try {
-            //           vc.startStream(streamDataListener);
-            //       } catch (Exception e) {
-            //           Log.d("Fatal error", e.getMessage());
-            //       }
-            //     }
-            //   });
-            // }
-            // if call.method == "stopStream" {
-            //   DispatchQueue.main.async {
-            //     @Override
-            //     public void run() {
-            //       // Call the desired channel message here.
-            //       try {
-            //           vc.stopStream();
-            //       } catch (Exception e) {
-            //           Log.d("Fatal error", e.getMessage());
-            //       }
-            //     }
-            //   });
-            // }
+            if call.method == "connect" {
+                self.connect(identity: self.vc.getFlirOne()!);
+            }
+            if call.method == "disconnect" {
+                self.vc.disconnect();
+                result(true);
+            }
+            if call.method == "discover" {
+                self.startDiscovery();
+            }
+            if call.method == "startStream" {
+                DispatchQueue.main.async {
+                    // Call the desired channel message here.
+                    func run(){
+                        self.vc.startStream(listener: self.streamDataListener)
+                    }
+                }
+            }
+            if call.method == "stopStream" {
+                DispatchQueue.main.async {
+                    // Call the desired channel message here.
+                    func run(){
+                        self.vc.stopStream();
+                    }
+                }
+            }
         }
     }
 
-  // private void startDiscovery() {
-  //     cameraHandler.startDiscovery(discoveryEventListener, discoveryStatusListener);
-  // }
+    func startDiscovery() {
+        self.vc.startDiscovery(cameraDiscoveryListener: discoveryEventListener, discoveryStatus: DiscoveryStatus.self as! DiscoveryStatus);
+    }
 
-  // private void stopDiscovery(){
-  //     cameraHandler.stopDiscovery(discoveryStatusListener);
-  // }
+    func stopDiscovery(){
+        self.vc.stopDiscovery(discoveryStatus: DiscoveryStatus.self as! DiscoveryStatus)
+    }
 
-  // private void connect(Identity identity) {
-  //     //We don't have to stop a discovery but it's nice to do if we have found the camera that we are looking for
-  //     stopDiscovery();
+    func connect(identity: FLIRIdentity!) {
+        //We don't have to stop a discovery but it's nice to do if we have found the camera that we are looking for
+        self.stopDiscovery();
 
-  //     if(connectedIdentity != null) {
-  //         new Handler(Looper.getMainLooper()).post(new Runnable(){
-  //         @Override
-  //         public void run(){
-  //             channel.invokeMethod("connected", true);
-  //         }
-  //         });
-  //     }
+        if connectedIdentity != nil {
+            DispatchQueue.main.async {
+                func run(){
+                    self.cameraChannel.invokeMethod("connected", arguments: true);
+                }
+            }
+        }
 
-  //     if(identity == null){
-  //         return;
-  //     }
+        if identity == nil {
+            return;
+        }
 
-  //     connectedIdentity = identity;
+        self.connectedIdentity = identity;
+        self.doConnect(identity: identity);
+    }
 
-  //     if (UsbPermissionHandler.isFlirOne(identity)) {
-  //         usbPermissionHandler.requestFlirOnePermisson(identity, getApplicationContext(), permissionListener);
-  //     } else {
-  //         doConnect(identity);
-  //     }
+    func doConnect(identity: FLIRIdentity) {
+        DispatchQueue.main.async {
+            func run(){
+                do {
+                    try self.vc.connect(identity: identity, connectionStatusListener: self.connectionStatusListener);
+                    self.cameraChannel.invokeMethod("connected", arguments: true);
+                } catch {
+                    self.cameraChannel.invokeMethod("connected", arguments: false);
+                }
+            }
+        }
+    }
 
-  // }
+    var streamDataListener: StreamDataListener {
+        func temperature(temperature: Double) {
+            DispatchQueue.main.async {
+                func run(){
+                    self.cameraChannel.invokeMethod("temperature", arguments: temperature);
+                }
+            }
+        }
 
-  // private void doConnect(Identity identity) {
-  //     new Thread(new Runnable(){
-  //     @Override
-  //     public void run(){
-  //         try {
-  //         cameraHandler.connect(identity, connectionStatusListener);
+        func bytes(msxBitmap: CGBitmapInfo){
+            let byteArray: [UInt8] = msxBitmap.rawValue
+            DispatchQueue.main.async {
+                func run(){
+                    self.cameraChannel.invokeMethod("streamBytes", arguments: byteArray);
+                }
+            }
+        }
 
-  //         new Handler(Looper.getMainLooper()).post(new Runnable(){
-  //             @Override
-  //             public void run(){
-  //             channel.invokeMethod("connected", true);
-  //             }
-  //         });
-                  
-  //         } catch (IOException e) {
+        func onStreamStopped(){
+            DispatchQueue.main.async {
+                func run(){
+                    self.cameraChannel.invokeMethod("streamFinished", arguments: true);
+                }
+            }
+        }
+    }
 
-  //         new Handler(Looper.getMainLooper()).post(new Runnable(){
-  //             @Override
-  //             public void run(){
-  //             channel.invokeMethod("connected", false);
-  //             }
-  //         });
-  //         }
-  //     }
-  //     }).start();
-  // }
+    var discoveryEventListener: FLIRDiscoveryEventDelegate {
+        func cameraFound(_ cameraIdentity: FLIRIdentity) {
+            self.vc.add(identity: cameraIdentity);
+            DispatchQueue.main.async {
+                // Call the desired channel message here.
+                func run(){
+                    self.cameraChannel.invokeMethod("discovered", arguments: true);
+                }
+            }
+        }
+    }
 
-  // private UsbPermissionHandler.UsbPermissionListener permissionListener = new UsbPermissionHandler.UsbPermissionListener() {
-  //     @Override
-  //     public void permissionGranted(Identity identity) {
-  //         doConnect(identity);
-  //     }
+    var connectionStatusListener: FLIRDataReceivedDelegate {
+        func onDisconnected(_ camera: FLIRCamera, withError: Error?) {
+            DispatchQueue.main.async {
+                func run(){
+                    self.cameraChannel.invokeMethod("disconnected", arguments: true);
+                }
+            }
+        }
+    }
 
-  //     @Override
-  //     public void permissionDenied(Identity identity) {
-  //         stopDiscovery();
-  //         cameraHandler.clear();
-  //     }
+    override
+    func applicationWillTerminate(_ application: UIApplication) {
+        super.applicationWillTerminate(application);
+        vc.disconnect();
+    }
 
-  //     @Override
-  //     public void error(UsbPermissionHandler.UsbPermissionListener.ErrorType errorType, final Identity identity) {
-          
-  //     }
-  // };
-
-  // private final CameraHandler.StreamDataListener streamDataListener = new CameraHandler.StreamDataListener() {
-  //     @Override
-  //     public void temperature(Double temperature) {
-  //     try {
-  //         new Handler(Looper.getMainLooper()).post(new Runnable() {
-  //         @Override
-  //         public void run() {
-  //             channel.invokeMethod("temperature", temperature);
-  //         }
-  //         });
-  //         // msxBitmap.recycle();
-  //     } catch (Exception e) {
-  //     }
-  //     }
-
-  //     @Override
-  //     public void bytes(Bitmap msxBitmap){
-  //     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-  //     msxBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-  //     byte[] byteArray = stream.toByteArray();
-  //     new Handler(Looper.getMainLooper()).post(new Runnable() {
-  //         @Override
-  //         public void run() {
-  //         channel.invokeMethod("streamBytes", byteArray);
-  //         }
-  //     });
-  //     msxBitmap.recycle();
-  //     }
-
-  //     @Override
-  //     public void onStreamStopped(){
-  //     new Handler(Looper.getMainLooper()).post(new Runnable() {
-  //         @Override
-  //         public void run() {
-  //         channel.invokeMethod("streamFinished", true);
-  //         }
-  //     });
-  //     }
-  // };
-
-  // private DiscoveryEventListener discoveryEventListener = new DiscoveryEventListener() {
-  //     @Override
-  //         public void onCameraFound(Identity identity) {
-  //         cameraHandler.add(identity);
-
-  //         new Handler(Looper.getMainLooper()).post(new Runnable() {
-  //             @Override
-  //             public void run() {
-  //             // Call the desired channel message here.
-  //             channel.invokeMethod("discovered", true);
-  //             }
-  //         });
-  //         }
-
-  //         @Override
-  //         public void onDiscoveryError(CommunicationInterface communicationInterface, ErrorCode errorCode) {
-          
-  //         }
-  // };
-
-  // private CameraHandler.DiscoveryStatus discoveryStatusListener = new CameraHandler.DiscoveryStatus() {
-  //     @Override
-  //     public void started(){};
-
-  //     @Override
-  //     public void stopped(){};
-  // };
-
-  // private ConnectionStatusListener connectionStatusListener = new ConnectionStatusListener(){
-  //     @Override
-  //     public void onDisconnected(ErrorCode errorCode){
-  //     new Handler(Looper.getMainLooper()).post(new Runnable(){
-  //         @Override
-  //         public void run(){
-  //         channel.invokeMethod("disconnected", true);
-  //         }
-  //     });
-  //     }
-  // };
-
-  // @Override
-  // protected void onDestroy(){
-  //     super.onDestroy(); 
-  //     cameraHandler.disconnect();
-  // }
-
-  // @Override
-  // protected void onStop(){
-  //     super.onStop(); 
-  //     cameraHandler.disconnect();
-  // }
+    override
+    func applicationWillResignActive(_ application: UIApplication) {
+        super.applicationWillResignActive(application);
+        vc.disconnect();
+    }
 }

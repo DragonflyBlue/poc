@@ -12,6 +12,8 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		DA2024D924C9EEBE00CA0156 /* MeterLink.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA2024D824C9EEBE00CA0156 /* MeterLink.framework */; };
+		DA2024DA24C9EEBE00CA0156 /* MeterLink.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DA2024D824C9EEBE00CA0156 /* MeterLink.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DA21DB4524BF946B002E54B1 /* ThermalSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DA21DB4324BF9068002E54B1 /* ThermalSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DA21DB4624BFA5BF002E54B1 /* ThermalSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA21DB4324BF9068002E54B1 /* ThermalSDK.framework */; };
 		DAD7F96424C755A300154764 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
@@ -25,6 +27,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				DA2024DA24C9EEBE00CA0156 /* MeterLink.framework in Embed Frameworks */,
 				DA21DB4524BF946B002E54B1 /* ThermalSDK.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -46,6 +49,7 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DA2024D824C9EEBE00CA0156 /* MeterLink.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MeterLink.framework; path = Dependencies/MeterLink.framework; sourceTree = "<group>"; };
 		DA21DB4324BF9068002E54B1 /* ThermalSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ThermalSDK.framework; path = Dependencies/ThermalSDK.framework; sourceTree = "<group>"; };
 		DAD7F96524C7576200154764 /* CameraHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraHandler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -55,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA2024D924C9EEBE00CA0156 /* MeterLink.framework in Frameworks */,
 				DA21DB4624BFA5BF002E54B1 /* ThermalSDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -118,6 +123,7 @@
 		DAFD958324BF8F6D0077189D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DA2024D824C9EEBE00CA0156 /* MeterLink.framework */,
 				DA21DB4324BF9068002E54B1 /* ThermalSDK.framework */,
 			);
 			name = Frameworks;
