@@ -4,15 +4,16 @@ import Flutter
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
     var connectedIdentity: FLIRIdentity? = nil
+    let vc: CameraHandler = CameraHandler()
     var cameraChannel: FlutterMethodChannel
-    let vc: CameraHandler
-    
+        
     override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-
+        cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
+        
         linkNativeCode(controller: controller)
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -25,7 +26,6 @@ extension AppDelegate {
     }
     
     private func setupMethodChannelForCamera(controller: FlutterViewController) {
-        cameraChannel = FlutterMethodChannel.init(name: "com.nationwide.thermal_poc/flir", binaryMessenger: controller.binaryMessenger)
         cameraChannel.setMethodCallHandler { (call, result) in          
             if call.method == "sdkVersion" {
                 self.cameraChannel.invokeMethod("sdkVersionReturn", arguments: self.vc.sdkVersion());
@@ -114,7 +114,7 @@ extension AppDelegate {
         }
 
         func bytes(msxBitmap: CGBitmapInfo){
-            let byteArray: [UInt8] = msxBitmap.rawValue
+            let byteArray: UInt32 = msxBitmap.rawValue
             DispatchQueue.main.async {
                 func run(){
                     self.cameraChannel.invokeMethod("streamBytes", arguments: byteArray);
@@ -143,7 +143,7 @@ extension AppDelegate {
         }
     }
 
-    var connectionStatusListener: FLIRDataReceivedDelegate {
+    var connectionStatusListener: FLIRRemoteDelegate {
         func onDisconnected(_ camera: FLIRCamera, withError: Error?) {
             DispatchQueue.main.async {
                 func run(){
