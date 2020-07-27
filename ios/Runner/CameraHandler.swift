@@ -142,7 +142,7 @@ protocol DiscoveryStatus {
     }
 
     var handleIncomingImage: FLIRThermalImage {
-        let thermalImage: FLIRThermalImage = self.camera.
+        let thermalImage: FLIRThermalImage
         
         let image = thermalImage.getImage().cgImage
         let msxBitmap = thermalImage.getImage().cgImage?.bitmapInfo
