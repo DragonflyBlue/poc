@@ -26,23 +26,18 @@ protocol DiscoveryStatus {
         camera = FLIRCamera()
     }
 
-    /**
-    * Start discovery of USB and Emulators
-    */
     func startDiscovery(cameraDiscoveryListener: FLIRDiscoveryEventDelegate, discoveryStatus: DiscoveryStatus) {
         discoverer.start(FLIRCommunicationInterface.lightning)
+        discoverer.delegate = cameraDiscoveryListener
         discoveryStatus.started()
     }
 
-    /**
-    * Stop discovery of USB and Emulators
-    */
     func stopDiscovery(discoveryStatus: DiscoveryStatus) {
         discoverer.stop()
         discoveryStatus.stopped()
     }
 
-    func connect(identity: FLIRIdentity, connectionStatusListener: FLIRDataReceivedDelegate) throws {
+    func connect(identity: FLIRIdentity, connectionStatusListener: FLIRRemoteDelegate) throws {
         try camera.connect(identity);
         camera.delegate = connectionStatusListener
     }
@@ -136,7 +131,7 @@ protocol DiscoveryStatus {
             //Will be called on a non-ui thread
             DispatchQueue.main.async {
                 func run(){
-                    self.camera.withImage(self.handleIncomingImage())
+                    self.camera.withImage(self.handleIncomingImage)
                 }
             }
         }
@@ -146,15 +141,15 @@ protocol DiscoveryStatus {
         camera.disconnect()
     }
 
-    func handleIncomingImage() -> FLIRThermalImageBlock {
-        let uiImage: UIImage = (camera.self.delegate?.getImage())!
-        let image = uiImage.cgImage
-        let msxBitmap = uiImage.cgImage?.bitmapInfo
+    var handleIncomingImage: FLIRThermalImage {
+        let thermalImage: FLIRThermalImage =
+        
+        let image = thermalImage.getImage().cgImage
+        let msxBitmap = thermalImage.getImage().cgImage?.bitmapInfo
 
         let x: Int = image!.width / 2;
         let y: Int = image!.height / 2;
         
-        let thermalImage: FLIRThermalImage
         thermalImage.setTemperatureUnit(TemperatureUnit.FAHRENHEIT);
         let temperature: Double = thermalImage.getValueAt(CGPoint(x:x, y:y));
 
